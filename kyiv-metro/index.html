@@ -238,7 +238,7 @@ input[type=range]{width:100%;accent-color:var(--ink2);margin:0}
     <span class="v" id="exagV">×65</span>
   </div>
   <div class="row">
-    <label class="check"><input type="checkbox" id="pins"> Виразніші нитки до поверхні</label>
+    <label class="check"><input type="checkbox" id="names" checked> Назви станцій</label>
   </div>
 </div>
 <div id="tip"></div>
@@ -1004,10 +1004,7 @@ exagEl.addEventListener("input",function(){
   var ax=document.getElementById("aboutX"); if(ax) ax.textContent=exag;
   buildLines(); syncLabels(); orderLabels();
 });
-document.getElementById("pins").addEventListener("change",function(e){
-  showPins=e.target.checked;
-  Object.keys(pinMats).forEach(function(k){ pinMats[k].opacity=pinOpacity(k.indexOf("|e")>0); });
-});
+document.getElementById("names").addEventListener("change",function(e){ showNames=e.target.checked; });
 
 /* ── цикл ──────────────────────────────────────────────────────── */
 function resize(){
