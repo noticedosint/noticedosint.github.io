@@ -23,7 +23,7 @@
 (function(){ var s=null; try{ s=localStorage.getItem("nyc-theme2"); }catch(e){}
   if(s==="light") document.documentElement.setAttribute("data-theme","light"); })();
 </script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Archivo+Black&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Archivo+Black&family=Unbounded:wght@600;800&family=Commissioner:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 :root{
   --bg:#e9ebee; --bg2:#f7f8fa; --fog:#dfe2e6;
@@ -969,7 +969,7 @@ var cam={theta:-0.022, phi:0.934, dist:9540, tx:PIV[0], ty:-560, tz:PIV[1]};
 var targetDist=cam.dist;
 /* Верхня межа відведення: Стейтен-Айленд лежить за 25 км від Бронкса, і на
    попередніх 13 760 одиницях два кінці мережі не вміщались у кадр разом. */
-var DMIN=1920, DMAX=18000;
+var DMIN=1920, DMAX=11600;
 var fogAt=9540;          // на якій дистанції востаннє перерахували туман
 function setDist(d){
   targetDist=Math.max(DMIN,Math.min(DMAX,d));
@@ -1624,7 +1624,7 @@ function drawTrains(){
 var playB=document.getElementById("play"), clockT=document.getElementById("clockT"),
     clockR=document.getElementById("clockR"), clockN=document.getElementById("clockN"),
     speedsEl=document.getElementById("speeds");
-var SPEEDS=[[60,"1 хв/с"],[300,"5 хв/с"],[900,"15 хв/с"],[3600,"1 год/с"]];
+var SPEEDS=[[60,"1 хв/с"],[300,"5 хв/с"],[900,"15 хв/с"]];
 var ICON_PLAY='<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 1.8v8.4L10.2 6z" fill="currentColor"/></svg>',
     ICON_PAUSE='<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><rect x="2.4" y="1.8" width="2.6" height="8.4" rx=".6" fill="currentColor"/><rect x="7" y="1.8" width="2.6" height="8.4" rx=".6" fill="currentColor"/></svg>';
 function hhmm(t){ t=Math.floor(t/60); return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0"); }
@@ -1736,21 +1736,45 @@ requestAnimationFrame(frame);
 <style>
 /* ---- канальні латки оформлення (tools/patch_nyc.py) ---------------------- */
 
-/* Керування поїздами: лишається одна компактна кнопка. Годинник, повзунок доби,
-   лічильник поїздів, швидкість і хрестик приховано — елементи лишаються в DOM,
-   бо на них спирається логіка сцени. */
-#clock{flex:none!important;max-width:none;}
+/* 1. Керування поїздами: компактна кнопка-перемикач + три швидкості.
+      Годинник доби, повзунок часу, лічильник поїздів і хрестик приховані —
+      елементи лишаються в DOM, бо на них спирається логіка сцени. */
+#clock{flex:none!important;max-width:none}
 #clock #play,#clock #clockT,#clock #clockR,#clock #clockN,
-#clock #clockD,#clock #speeds,#clock #trX{display:none!important}
+#clock #clockD,#clock #trX{display:none!important}
 #clock #trGo{display:inline-flex!important}
+#clock #speeds{margin-left:2px}
 #trGo .i-stop{display:none}
 #trGo[aria-pressed="true"] .i-go{display:none}
 #trGo[aria-pressed="true"] .i-stop{display:block}
+#speeds button{font-family:"Commissioner",sans-serif}
 
-/* Вікна підказок — як на київській сторінці: та сама заокругленість і поля. */
-#about{border-radius:13px;padding:16px 18px 18px}
-#panel{border-radius:12px;padding:16px;width:310px}
+/* 2. Друкарня як на київській сторінці: назва Unbounded, решта Commissioner.
+      Archivo лишається для підписів усередині полотна. */
+body{font-family:"Commissioner",system-ui,-apple-system,sans-serif}
+
+#title{width:min(360px,calc(100vw - 32px));max-width:min(360px,calc(100vw - 32px))}
+#title h1{font-family:"Unbounded",sans-serif;font-weight:800;
+  font-size:clamp(19px,3.4vw,25px);line-height:1.06;letter-spacing:-.02em;margin:0 0 5px}
+#title p{font-family:"Commissioner",system-ui,sans-serif;font-size:12.5px;line-height:1.4}
+
+#why,#gear,#theme{font:600 11.5px/1 "Commissioner",sans-serif}
+
+#about{top:calc(env(safe-area-inset-top,0px) + 66px);
+  width:min(392px,calc(100vw - 32px));max-height:calc(100vh - 230px);
+  border-radius:13px;padding:16px 18px 18px}
+#about h2{font-family:"Unbounded",sans-serif;font-weight:600;font-size:13px;
+  letter-spacing:-.01em;margin:0 0 10px}
+#about p{font:400 12.5px/1.5 "Commissioner",system-ui,sans-serif;margin:0 0 10px}
+
+#panel{width:min(310px,calc(100vw - 32px));border-radius:12px;padding:16px}
+#panel label{font:600 10px/1 "Commissioner",sans-serif;letter-spacing:.11em;text-transform:uppercase}
+#panel .check{font-family:"Commissioner",system-ui,sans-serif;font-size:13px}
+
 #tip{border-radius:9px;padding:10px 13px;max-width:250px}
+#tip .t{font-family:"Unbounded",sans-serif;font-weight:600;font-size:14px;letter-spacing:-.01em}
+#tip .s{font:400 11.5px/1.35 "Commissioner",system-ui,sans-serif}
+#tip .x{font:400 11.5px/1.35 "Commissioner",system-ui,sans-serif}
 </style>
 
 </body>
