@@ -173,7 +173,7 @@ input[type=range]{width:100%;accent-color:var(--ink2);margin:0}
   #modes{gap:2px;padding:3px}
   .mode{font-size:12px;padding:7px 11px}
   #why,#gear,#theme{font-size:11px;padding:7px 11px}
-  #corner{right:12px}
+  #corner{left:16px;right:auto}
   .lname{display:none}
   .lshort{display:inline}
   .leg{font-size:11.5px;padding:5px 10px 5px 7px;font-weight:600}
@@ -225,7 +225,6 @@ input[type=range]{width:100%;accent-color:var(--ink2);margin:0}
 <div id="corner">
   <button id="why" type="button" aria-expanded="false">Як читати модель</button>
   <button id="gear" type="button" aria-expanded="false">Налаштування</button>
-  <button id="theme" type="button" aria-label="Денна або нічна карта">Ніч</button>
 </div>
 <div id="panel" hidden>
   <div class="row">
@@ -236,6 +235,7 @@ input[type=range]{width:100%;accent-color:var(--ink2);margin:0}
   <div class="row">
     <label class="check"><input type="checkbox" id="names" checked> Назви станцій</label>
     <label class="check"><input type="checkbox" id="pins"> Виразніші підвіси</label>
+    <label class="check"><input type="checkbox" id="lightchk"> Світла тема</label>
   </div>
 </div>
 <div id="tip"></div>
@@ -1011,33 +1011,39 @@ addEventListener("resize",resize);
 /* ── день і ніч ─────────────────────────────────────────────────
    Стартуємо з системної теми, вибір користувача кладемо поряд — але сторінка
    мусить працювати і тоді, коли сховище недоступне. */
-var themeBtn=document.getElementById("theme");
+var themeBtn=document.getElementById("theme");          /* може не існувати */
+var lightChk=document.getElementById("lightchk");
 function repaint(){
   css=getComputedStyle(document.documentElement);
   applyFog(); buildGround(); buildLines(); syncLabels(); orderLabels(); paintLegend();
 }
+function syncThemeUI(t){
+  if(themeBtn) themeBtn.textContent = t==="dark" ? "День" : "Ніч";
+  if(lightChk) lightChk.checked = (t==="light");
+}
 function setTheme(t,remember){
   document.documentElement.setAttribute("data-theme",t);
-  themeBtn.textContent = t==="dark" ? "День" : "Ніч";
+  syncThemeUI(t);
   if(remember){ try{ localStorage.setItem("kyiv-theme",t); }catch(e){} }
   setTimeout(repaint,30);
 }
 (function(){
   var saved=null;
   try{ saved=localStorage.getItem("kyiv-theme"); }catch(e){}
-  var t=(saved==="dark"||saved==="light") ? saved : (sysDark()?"dark":"light");
+  var t=(saved==="dark"||saved==="light") ? saved : "dark";
   document.documentElement.setAttribute("data-theme",t);
-  themeBtn.textContent = t==="dark" ? "День" : "Ніч";
+  syncThemeUI(t);
   css=getComputedStyle(document.documentElement);
   paintLegend();
 })();
-themeBtn.onclick=function(){ setTheme(themeNow()==="dark"?"light":"dark",true); };
+if(themeBtn) themeBtn.onclick=function(){ setTheme(themeNow()==="dark"?"light":"dark",true); };
+if(lightChk) lightChk.onchange=function(){ setTheme(lightChk.checked?"light":"dark",true); };
 var themeQ=matchMedia("(prefers-color-scheme:dark)");
 if(themeQ.addEventListener) themeQ.addEventListener("change",function(e){
   var saved=null;
   try{ saved=localStorage.getItem("kyiv-theme"); }catch(e2){}
   if(saved==="dark"||saved==="light") return;      // вибір користувача сильніший
-  setTheme(e.matches?"dark":"light",false);
+  /* типова тема темна; системну не слухаємо, поки людина не обрала сама */
 });
 function frame(now){
   if(intro) intro(now);
