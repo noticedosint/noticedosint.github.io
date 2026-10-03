@@ -225,6 +225,7 @@ input[type=range]{width:100%;accent-color:var(--ink2);margin:0}
 <div id="corner">
   <button id="why" type="button" aria-expanded="false">Як читати модель</button>
   <button id="gear" type="button" aria-expanded="false">Налаштування</button>
+  <button id="theme" type="button" aria-label="Денна або нічна карта">Ніч</button>
 </div>
 <div id="panel" hidden>
   <div class="row">
@@ -235,7 +236,6 @@ input[type=range]{width:100%;accent-color:var(--ink2);margin:0}
   <div class="row">
     <label class="check"><input type="checkbox" id="names" checked> Назви станцій</label>
     <label class="check"><input type="checkbox" id="pins"> Виразніші підвіси</label>
-    <label class="check"><input type="checkbox" id="lightchk"> Світла тема</label>
   </div>
 </div>
 <div id="tip"></div>
@@ -1024,12 +1024,12 @@ function syncThemeUI(t){
 function setTheme(t,remember){
   document.documentElement.setAttribute("data-theme",t);
   syncThemeUI(t);
-  if(remember){ try{ localStorage.setItem("kyiv-theme",t); }catch(e){} }
+  if(remember){ try{ localStorage.setItem("kyiv-theme2",t); }catch(e){} }
   setTimeout(repaint,30);
 }
 (function(){
   var saved=null;
-  try{ saved=localStorage.getItem("kyiv-theme"); }catch(e){}
+  try{ saved=localStorage.getItem("kyiv-theme2"); }catch(e){}
   var t=(saved==="dark"||saved==="light") ? saved : "dark";
   document.documentElement.setAttribute("data-theme",t);
   syncThemeUI(t);
@@ -1041,7 +1041,7 @@ if(lightChk) lightChk.onchange=function(){ setTheme(lightChk.checked?"light":"da
 var themeQ=matchMedia("(prefers-color-scheme:dark)");
 if(themeQ.addEventListener) themeQ.addEventListener("change",function(e){
   var saved=null;
-  try{ saved=localStorage.getItem("kyiv-theme"); }catch(e2){}
+  try{ saved=localStorage.getItem("kyiv-theme2"); }catch(e2){}
   if(saved==="dark"||saved==="light") return;      // вибір користувача сильніший
   /* типова тема темна; системну не слухаємо, поки людина не обрала сама */
 });
