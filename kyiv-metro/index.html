@@ -41,8 +41,8 @@
   --grid:#6c7784; --gname:#97a0ab; --wname:#79a9d0;
 }
 *{box-sizing:border-box}
-html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;
+html,body{height:100%;overscroll-behavior:none}
+body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;position:fixed;inset:0;width:100%;
   font-family:"Commissioner",system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
 #scene{position:fixed;inset:0;touch-action:none;cursor:grab}
 #scene.drag{cursor:grabbing}
@@ -739,6 +739,10 @@ host.addEventListener("touchstart",function(e){
                           pinchD=0; pinchC=null; }
 },{passive:true});
 host.addEventListener("touchmove",function(e){
+  /* Вебв'ю Телеграма читає вертикальний свайп по сторінці як «згорнути».
+     touch-action:none цього не спиняє, тому жест по полотну гасимо явно.
+     Прокрутка «Як читати» не страждає: слухач висить лише на #scene. */
+  if(e.cancelable) e.preventDefault();
   if(e.touches.length!==2) return;
   var t0=e.touches[0], t1=e.touches[1];
   var d=Math.hypot(t0.clientX-t1.clientX, t0.clientY-t1.clientY);
@@ -756,7 +760,7 @@ host.addEventListener("touchmove",function(e){
     }
   }
   pinchD=d; pinchC=c;
-},{passive:true});
+},{passive:false});
 host.addEventListener("touchend",function(e){
   pinchD=0; pinchC=null;
   if(e.touches.length===0) pinching=false;
