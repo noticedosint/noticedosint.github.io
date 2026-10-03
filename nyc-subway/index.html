@@ -1136,7 +1136,7 @@ function hover(e,touch){
   var d=nearestStation(e.clientX,e.clientY, touch?34:16);
   if(!d){ hideTip(); return; }
   var st=d.st;
-  if(d.anc){ tip.innerHTML=anchorCard(st); placeTip(e); return; }
+  if(d.anc){ tip.innerHTML=anchorCard(st); placeTip(e,touch); return; }
   var h='<div class="t">'+st.n+'</div>';
   h+='<div class="s">'+(BORO[st.b]||st.b)+' · '+(STRU[st.t]||st.t)+'</div>';
   var v=st.lv;
@@ -1164,7 +1164,7 @@ function hover(e,touch){
   if(st.q==="m") h+='<div class="x"><b>Опубліковано:</b> '+(st.why||'')+'.</div>';
   else if(st.q==="i") h+='<div class="x"><b>Оцінено між сусідами.</b> Власного числа нема; рівень узято між сусідніми станціями — це оцінка, а не дані.</div>';
   else h+='<div class="x"><b>Умовний рівень.</b> Глибини цієї станції ніде не опубліковано — показано умовне значення для «'+(STRU[st.t]||st.t)+'». Справжнє може відрізнятися на метри, а під пагорбами — на десятки метрів.</div>';
-  tip.innerHTML=h; placeTip(e);
+  tip.innerHTML=h; placeTip(e,touch);
 }
 function anchorCard(a){
   /* Типи (v67): est — колію оцінено з опублікованої глибини тунелю; env — відомі лише межі;
@@ -1187,18 +1187,16 @@ function anchorCard(a){
   return h;
 }
 function hideTip(){ tip.classList.remove("on"); document.body.classList.remove("tipopen"); }
-function placeTip(e){
+function placeTip(e,touch){
   tip.classList.add("on");
-  if(VW<640){                              // біля пальця картка затуляє те, що дивишся
+  if(touch && VW<640){                     // біля пальця картка затуляє те, що дивишся
     tip.classList.add("sheet"); document.body.classList.add("tipopen");
     tip.style.left=""; tip.style.top=""; return;
   }
   tip.classList.remove("sheet"); document.body.classList.remove("tipopen");
-  var r=tip.getBoundingClientRect();
-  var x=e.clientX+16, y=e.clientY+16;
-  if(x+r.width>innerWidth-10) x=e.clientX-r.width-16;
-  if(y+r.height>innerHeight-10) y=e.clientY-r.height-16;
-  tip.style.left=Math.max(8,x)+"px"; tip.style.top=Math.max(8,y)+"px";
+  var tw=tip.offsetWidth, th=tip.offsetHeight;
+  tip.style.left=Math.min(innerWidth-tw-10,Math.max(10,e.clientX+15))+"px";
+  tip.style.top=Math.min(innerHeight-th-10,Math.max(10,e.clientY-th-12))+"px";
 }
 host.addEventListener("pointerleave",function(){ hideTip(); });
 
