@@ -1782,6 +1782,11 @@ body{font-family:"Commissioner",system-ui,-apple-system,sans-serif}
   #corner{display:flex!important;left:16px;right:auto;
     bottom:calc(env(safe-area-inset-bottom,0px) + 52px);gap:6px;flex-wrap:wrap}
   #why,#gear,#theme{font-size:11px;padding:7px 11px}
+  /* Назва на телефоні теж за київськими числами: 17px і відступ знизу 18, а не 6 —
+     інакше просвіт між кнопками й назвою на чверть більший, ніж у Києві. */
+  #title{bottom:calc(env(safe-area-inset-bottom,0px) + 18px)}
+  #title h1{font-size:17px;margin-bottom:3px}
+  #title p{font-size:11.5px}
   #ctools{display:none!important}
   #clock.off{flex:none}
   #clock{flex-basis:auto;flex-wrap:nowrap}
