@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| [kyiv-metro](https://noticedosint.github.io/kyiv-metro/) | Глибини київського метро — тривимірна модель 52 станцій |
+| [kyiv-metro](https://noticedosint.github.io/kyiv-metro/) | Київ у розрізі — тривимірна модель 52 станцій метро |
 | [nyc-subway](https://noticedosint.github.io/nyc-subway/) | Рівні нью-йоркського метро — 496 станцій |
 
 Кожна робота лежить окремою текою з власним `index.html`. Сторінки самодостатні:
