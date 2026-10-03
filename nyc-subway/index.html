@@ -1470,7 +1470,7 @@ function setTheme(t,remember){
   themeBtn.querySelector(".bt").textContent = t==="dark" ? "День" : "Ніч";
 })();
 /* На телефоні три кнопки переїжджають у картку годинника, на ширшому — назад у кут. */
-var ctools=document.getElementById("ctools"), mqTools=matchMedia("(max-width:640px)");
+var ctools=document.getElementById("ctools"), mqTools=matchMedia("(max-width:0px)");
 function placeTools(){
   var want=mqTools.matches;
   if(want===toolsTop) return;
@@ -1775,6 +1775,17 @@ body{font-family:"Commissioner",system-ui,-apple-system,sans-serif}
 #tip .t{font-family:"Unbounded",sans-serif;font-weight:600;font-size:14px;letter-spacing:-.01em}
 #tip .s{font:400 11.5px/1.35 "Commissioner",system-ui,sans-serif}
 #tip .x{font:400 11.5px/1.35 "Commissioner",system-ui,sans-serif}
+
+/* 3. Телефон: кут із трьома кнопками повертається на місце — текстом, ліворуч над
+      назвою, як на київській сторінці. Картка згори лишається самим «Рух поїздів». */
+@media (max-width:640px){
+  #corner{display:flex!important;left:16px;right:auto;
+    bottom:calc(env(safe-area-inset-bottom,0px) + 52px);gap:6px;flex-wrap:wrap}
+  #why,#gear,#theme{font-size:11px;padding:7px 11px}
+  #ctools{display:none!important}
+  #clock.off{flex:none}
+  #clock{flex-basis:auto;flex-wrap:nowrap}
+}
 </style>
 
 </body>
