@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="uk" data-theme="dark">
+<html lang="uk">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="index,follow">
 <script>
-/* Тему ставимо до першого малювання. Головний скрипт доходить до неї
-   аж після збирання сцени, і на телефоні зі світлою системною темою весь екран
-   завантаження був білий. Атрибут на <html> тримає темну як типову. */
+/* Типово сторінка йде за темою системи — це робить сам CSS, ще до першого
+   кадру. А ось власний вибір людини треба накласти тут: головний скрипт доходить
+   до теми аж після збирання сцени, і екран завантаження встигав блимнути не тим кольором. */
 (function(){try{var s=localStorage.getItem("kyiv-theme3");
 if(s==="light"||s==="dark")document.documentElement.setAttribute("data-theme",s);}catch(e){}})();
 </script>
@@ -1037,7 +1037,7 @@ function setTheme(t,remember){
 (function(){
   var saved=null;
   try{ saved=localStorage.getItem("kyiv-theme3"); }catch(e){}
-  var t=(saved==="dark"||saved==="light") ? saved : "dark";
+  var t=(saved==="dark"||saved==="light") ? saved : (sysDark()?"dark":"light");
   document.documentElement.setAttribute("data-theme",t);
   themeBtn.textContent = t==="dark" ? "День" : "Ніч";
   css=getComputedStyle(document.documentElement);
@@ -1049,7 +1049,7 @@ if(themeQ.addEventListener) themeQ.addEventListener("change",function(e){
   var saved=null;
   try{ saved=localStorage.getItem("kyiv-theme3"); }catch(e2){}
   if(saved==="dark"||saved==="light") return;      // вибір користувача сильніший
-  /* типова тема темна; системну не слухаємо, поки людина не обрала сама */
+  setTheme(e.matches?"dark":"light",false);
 });
 function frame(now){
   if(intro) intro(now);
