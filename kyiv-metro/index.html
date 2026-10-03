@@ -1,9 +1,16 @@
 <!doctype html>
-<html lang="uk">
+<html lang="uk" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="index,follow">
+<script>
+/* Тему ставимо до першого малювання. Головний скрипт доходить до неї
+   аж після збирання сцени, і на телефоні зі світлою системною темою весь екран
+   завантаження був білий. Атрибут на <html> тримає темну як типову. */
+(function(){try{var s=localStorage.getItem("kyiv-theme3");
+if(s==="light"||s==="dark")document.documentElement.setAttribute("data-theme",s);}catch(e){}})();
+</script>
 <title>Київське метро в розрізі</title>
 <meta property="og:title" content="Київське метро в розрізі">
 <meta property="og:description" content="Половина станцій київського метро не глибша за 11,5 метра. Найнижча — «Арсенальна», 105,5 м.">
@@ -1024,12 +1031,12 @@ function repaint(){
 function setTheme(t,remember){
   document.documentElement.setAttribute("data-theme",t);
   themeBtn.textContent = t==="dark" ? "День" : "Ніч";
-  if(remember){ try{ localStorage.setItem("kyiv-theme2",t); }catch(e){} }
+  if(remember){ try{ localStorage.setItem("kyiv-theme3",t); }catch(e){} }
   setTimeout(repaint,30);
 }
 (function(){
   var saved=null;
-  try{ saved=localStorage.getItem("kyiv-theme2"); }catch(e){}
+  try{ saved=localStorage.getItem("kyiv-theme3"); }catch(e){}
   var t=(saved==="dark"||saved==="light") ? saved : "dark";
   document.documentElement.setAttribute("data-theme",t);
   themeBtn.textContent = t==="dark" ? "День" : "Ніч";
@@ -1040,7 +1047,7 @@ themeBtn.onclick=function(){ setTheme(themeNow()==="dark"?"light":"dark",true); 
 var themeQ=matchMedia("(prefers-color-scheme:dark)");
 if(themeQ.addEventListener) themeQ.addEventListener("change",function(e){
   var saved=null;
-  try{ saved=localStorage.getItem("kyiv-theme2"); }catch(e2){}
+  try{ saved=localStorage.getItem("kyiv-theme3"); }catch(e2){}
   if(saved==="dark"||saved==="light") return;      // вибір користувача сильніший
   /* типова тема темна; системну не слухаємо, поки людина не обрала сама */
 });
