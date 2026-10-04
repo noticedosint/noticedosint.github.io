@@ -1593,6 +1593,19 @@ function trainCarGeo(){
    у купу на кожному відправленні зі станції. Розрив у даних зупиняє хід назад. */
 var NCAR=4, JP=[];
 (function(){ for(var i=0;i<=NCAR;i++) JP.push(new THREE.Vector3()); })();
+/* Один гострий vertex у shape ламав склад до 117° — поїзд складався літерою V.
+   Це кут даних, а не колії. Трасу не чіпаємо: пригладжуємо лише ЛАНЦЮЖОК
+   суглобів фільтром [¼ ½ ¼]. Голова й хвіст лишаються точно на трасі, внутрішні
+   суглоби зрізають кут — рівно так, як це робить справжній склад. */
+var JS=[], JSMOOTH=3;   // 2 проходи лишали 27-35 суглобів з кутом >60°, 3 лишають 1-5
+(function(){ for(var i=0;i<=NCAR;i++) JS.push(new THREE.Vector3()); })();
+function smoothJoints(){
+  for(var p=0;p<JSMOOTH;p++){
+    for(var j=1;j<NCAR;j++)
+      JS[j].copy(JP[j]).multiplyScalar(0.5).addScaledVector(JP[j-1],0.25).addScaledVector(JP[j+1],0.25);
+    for(var j=1;j<NCAR;j++) JP[j].copy(JS[j]);
+  }
+}
 /* Скільки СВІТОВИХ одиниць припадає на одиницю довжини траси. Міряти це щокадру
    в рухомій точці не можна: проба раз у раз перетинає злам полілінії, коефіцієнт
    стрибає, і весь склад пульсує по довжині — саме це читалося як дьоргання.
@@ -1718,6 +1731,7 @@ function drawTrains(){
     // інакше всі вагони збиваються в одну точку на кінцевій
     if(k===trSeg0[i] && s<NCAR*CP) CP=Math.max(s/NCAR, CP*0.15);
     for(var jj=0;jj<=NCAR;jj++) backPoint(i,k,s,jj*CP,JP[jj]);
+    smoothJoints();
     var tc=trainCols[trRoute[i]], tch=trainHead[trRoute[i]]||tc;
     for(var jj=0;jj<NCAR;jj++){
       var A=JP[jj], B=JP[jj+1];
@@ -1744,7 +1758,8 @@ function drawTrains(){
   glowGeo.attributes.position.needsUpdate=true;
   glowGeo.attributes.aColor.needsUpdate=true;
   glowU.uPx.value=renderer.getPixelRatio();
-  glowU.uGlow.value=Math.max(0,Math.min(1,(cam.dist-2200)/3800))*0.92+0.08;
+  var gq=Math.max(0,Math.min(1,(cam.dist-2200)/3800)); gq=gq*gq*(3-2*gq);
+  glowU.uGlow.value=gq*0.92+0.08;
   trainMesh.count=mc; trLive=n;
   trainMesh.instanceMatrix.needsUpdate=true;
   if(trainMesh.instanceColor) trainMesh.instanceColor.needsUpdate=true;
