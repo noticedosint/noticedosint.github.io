@@ -263,6 +263,9 @@ input[type=range]{width:100%;accent-color:var(--ink2);margin:0}
     <span class="v" id="exagV">×65</span>
   </div>
   <div class="row">
+    <label class="check"><input type="checkbox" id="relief"> Висота над морем</label>
+  </div>
+  <div class="row">
     <label class="check"><input type="checkbox" id="names" checked> Назви станцій</label>
   </div>
 </div>
@@ -1156,15 +1159,18 @@ function setVnote(){
   }
   vnote.appendChild(b); vnote.appendChild(document.createTextNode("."));
 }
+var reliefEl=document.getElementById("relief");
 function toggleVMode(){
   ABS=!ABS;
   vmodeBtn.setAttribute("aria-pressed", ABS?"true":"false");
+  if(reliefEl) reliefEl.checked=ABS;
   setVnote();
   updateFit(); applyCam();
   groundG.position.y=floorY();
   buildLines(); syncLabels(); orderLabels();
 }
 vmodeBtn.addEventListener("click", toggleVMode);
+if(reliefEl) reliefEl.addEventListener("change", toggleVMode);
 setVnote();
 document.getElementById("names").addEventListener("change",function(e){ showNames=e.target.checked; });
 
