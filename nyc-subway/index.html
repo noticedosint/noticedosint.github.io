@@ -285,7 +285,7 @@ body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;position:fix
   умовному рівні свого типу — 6,1 метра під вулицею для тунелю, 8,8 над нею для естакади.
   Під річками й на мостах рівень колії теж оцінено: з опублікованої глибини труби й суднового
   просвіту. У картці кожної станції написано, що саме ви бачите.</p>
-  <p><b>Поїзди справжні.</b> Це четвер, 10 вересня 2026 року: кожен із 8 381 рейсу їде за
+  <p><b>Потяги справжні.</b> Це четвер, 10 вересня 2026 року: кожен із 8 381 рейсу їде за
   фактичними часами прибуття й відправлення, які потяги передавали в потік даних МТА.</p>
   <p style="color:var(--ink3);font-size:11.5px;margin-top:12px">Рух потягів: subwaydata.nyc (GTFS-RT МТА). Дані: MTA — станції, траси й кольори ліній; USGS NED 10 м — рельєф; Департамент парків Нью-Йорка — зелень; англійська Вікіпедія, nycsubway.org і книга IRT «The New York Subway» (1904) — опубліковані глибини.</p>
 </div>
@@ -309,7 +309,7 @@ body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;position:fix
   <label>Показувати</label>
   <div class="check"><input type="checkbox" id="names" checked><span>назви станцій</span></div>
   <div class="check"><input type="checkbox" id="pins"><span>виразніші підвіси</span></div>
-  <div class="check"><input type="checkbox" id="trains"><span>поїзди</span></div>
+  <div class="check"><input type="checkbox" id="trains"><span>потяги</span></div>
   <div class="check"><input type="checkbox" id="flat"><span>тінь трас на плані</span></div>
 </div>
 
@@ -1775,7 +1775,7 @@ var ICON_PLAY='<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true
 function hhmm(t){ t=Math.floor(t/60); return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0"); }
 function trainsWord(n){
   var d=n%10, h=n%100;
-  if(d===1&&h!==11) return "поїзд"; if(d>=2&&d<=4&&(h<12||h>14)) return "поїзди"; return "поїздів";
+  if(d===1&&h!==11) return "потяг"; if(d>=2&&d<=4&&(h<12||h>14)) return "потяги"; return "потягів";
 }
 function setPlay(v){
   trPlay=v; playB.innerHTML=v?ICON_PAUSE:ICON_PLAY;
