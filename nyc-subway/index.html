@@ -616,7 +616,7 @@ function stationGeos(){
      (2,09/2,50 у v56 на сталій трубі 8 виявилось забагато; v62 — знову 2,09/2,50,
      уже з плавною товщиною 12 → 8 → 5, на прохання користувача.) */
   geoSphere=new THREE.SphereGeometry(tubeRNow*2.09,16,12);
-  geoOcta=new THREE.OctahedronGeometry(tubeRNow*2.50,0);
+  geoOcta=new THREE.SphereGeometry(tubeRNow*2.09,16,12);
 }
 var UPT={"Elevated":1,"Viaduct":1,"Embankment":1,"At Grade":1};
 
@@ -1556,10 +1556,10 @@ function pairAt(k,s,out){
   return out;
 }
 
-/* Поїзд: чотири вагони з проміжками, ніс у переднього. Геометрія в межах
-   x,z = [-1,1], y = [-0.82,0.82]; масштаб (R,R,HL) накладається на екземпляр.
-   Кольори вершин множаться на instanceColor, тож числа більші за 1 вибілюють
-   (вікна, фара), менші — притемнюють (дах, днище). */
+/* Один вагон. Поїзд тепер не монолітна фігура, а NCAR окремих екземплярів, кожен
+   на своєму місці траси — на повороті склад згинається. Геометрія в межах
+   x,z = [-1,1], y = [-0.86,0.86]; бік трьома смугами по висоті (кузов, вікна,
+   кузов), тож вікна вбудовані в грань і нічого не стирчить. */
 function trainCarGeo(){
   var P=[], C=[], I=[];
   function q(p,c){
@@ -1567,48 +1567,66 @@ function trainCarGeo(){
     for(var i=0;i<4;i++){ P.push(p[i][0],p[i][1],p[i][2]); C.push(c,c,c); }
     I.push(b,b+1,b+2, b,b+2,b+3);
   }
-  function car(z0,z1,hw,hh,hw1,hh1,cSide,cTop,cBot,cFront,cBack,cWin){
-    var a=[[-hw,-hh,z0],[hw,-hh,z0],[hw,hh,z0],[-hw,hh,z0]];
-    var b=[[-hw1,-hh1,z1],[hw1,-hh1,z1],[hw1,hh1,z1],[-hw1,hh1,z1]];
-    // бік трьома смугами по висоті: кузов / вікна / кузов
-    var W0=-0.18, W1=0.52;
-    function side(sx){
-      var H=[-1,W0,W1,1], c=[cSide,cWin,cSide];
-      for(var k=0;k<3;k++){
-        var y0=H[k], y1=H[k+1];
-        var p0=[sx*hw, y0*hh, z0], p1=[sx*hw, y1*hh, z0],
-            p2=[sx*hw1, y1*hh1, z1], p3=[sx*hw1, y0*hh1, z1];
-        q(sx>0?[p0,p3,p2,p1]:[p0,p1,p2,p3], c[k]);
-      }
+  var HW=1, HH=0.86, W0=-0.18, W1=0.52;
+  var CS=0.95, CT=0.78, CB=0.55, CE=0.86, CW=1.45;
+  function side(sx){
+    var Y=[-1,W0,W1,1], cc=[CS,CW,CS];
+    for(var m=0;m<3;m++){
+      var y0=Y[m]*HH, y1=Y[m+1]*HH;
+      var p0=[sx*HW,y0,-1], p1=[sx*HW,y1,-1], p2=[sx*HW,y1,1], p3=[sx*HW,y0,1];
+      q(sx>0?[p0,p3,p2,p1]:[p0,p1,p2,p3], cc[m]);
     }
-    side(1); side(-1);
-    q([a[3],a[2],b[2],b[3]], cTop);
-    q([b[0],b[1],a[1],a[0]], cBot);
-    q([b[1],b[0],b[3],b[2]], cFront);
-    q([a[0],a[1],a[2],a[3]], cBack);
   }
-
-  var N=4, slot=2/N, gap=0.085, HW=1, HH=0.86;
-  for(var i=0;i<N;i++){
-    var z0=-1+i*slot+gap*0.5, z1=z0+slot-gap, front=(i===N-1);
-    car(z0, z1, HW, HH, front?0.70:HW, front?0.62:HH,
-        0.95, 0.78, 0.55, front?2.20:0.86, 0.60, 1.45);
-  }
+  side(1); side(-1);
+  q([[-HW,HH,-1],[HW,HH,-1],[HW,HH,1],[-HW,HH,1]], CT);
+  q([[-HW,-HH,1],[HW,-HH,1],[HW,-HH,-1],[-HW,-HH,-1]], CB);
+  q([[-HW,-HH,1],[HW,-HH,1],[HW,HH,1],[-HW,HH,1]], CE);
+  q([[-HW,-HH,-1],[-HW,HH,-1],[HW,HH,-1],[HW,-HH,-1]], CE);
   var g=new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.Float32BufferAttribute(P,3));
   g.setAttribute("color", new THREE.Float32BufferAttribute(C,3));
   g.setIndex(I);
   return g;
 }
+/* Точка на трасі за d одиниць ПОЗАДУ голови. Коли хвіст не вміщається в поточний
+   перегін, відходимо на попередній у ланцюжку рейсу — інакше вагони збивалися б
+   у купу на кожному відправленні зі станції. Розрив у даних зупиняє хід назад. */
+var NCAR=4, JP=[];
+(function(){ for(var i=0;i<=NCAR;i++) JP.push(new THREE.Vector3()); })();
+/* Скільки СВІТОВИХ одиниць припадає на одиницю довжини траси. Міряти це щокадру
+   в рухомій точці не можна: проба раз у раз перетинає злам полілінії, коефіцієнт
+   стрибає, і весь склад пульсує по довжині — саме це читалося як дьоргання.
+   Міряємо раз на перегін, коротким прольотом посередині, і запамʼятовуємо. */
+var pairUu=[], uA=new THREE.Vector3(), uB=new THREE.Vector3();
+function pairUnit(k){
+  var u=pairUu[k];
+  if(u===undefined){
+    var L=pairLen[k], a=L*0.45, b=L*0.55;
+    if(b-a<1e-6) u=1;
+    else { pairAt(k,a,uA); pairAt(k,b,uB); u=uA.distanceTo(uB)/(b-a); if(!(u>1e-6)) u=1; }
+    pairUu[k]=u;
+  }
+  return u;
+}
+function backPoint(i,k,s,d,out){
+  var kk=k, ss=s-d, lo=trSeg0[i];
+  while(ss<0 && kk>lo){
+    var prev=sgPair[kk-1];
+    if(TR.pe[prev][1]!==TR.pe[sgPair[kk]][0]) break;
+    kk--; ss+=pairLen[prev];
+  }
+  if(ss<0) ss=0;
+  return pairAt(sgPair[kk], ss, out);
+}
 var trainG=new THREE.Group(); root.add(trainG);
 var trainMesh=null, trainMat=new THREE.MeshBasicMaterial({color:0xffffff,vertexColors:true,side:THREE.DoubleSide});
 var TMAX=1200;
 (function(){
-  var g=trainCarGeo();                               // чотири вагони з проміжками
-  trainMesh=new THREE.InstancedMesh(g,trainMat,TMAX);
+  var g=trainCarGeo();                               // один вагон, їх NCAR на поїзд
+  trainMesh=new THREE.InstancedMesh(g,trainMat,TMAX*NCAR);
   trainMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   // r128 створює буфер кольорів ліниво, розміром із поточну кількість (0) — задаємо сам
-  trainMesh.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(TMAX*3),3);
+  trainMesh.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(TMAX*NCAR*3),3);
   trainMesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
   trainMesh.renderOrder=12; trainMesh.frustumCulled=false; trainMesh.count=0;
   trainG.add(trainMesh);
@@ -1617,7 +1635,7 @@ var TMAX=1200;
   /* Світлова мітка поїзда: голова плюс дві точки позаду — «комета» вздовж
      дотичної, а не збережений слід. Розмір у ПІКСЕЛЯХ, тому на віддаленому
      масштабі поїзд лишається видимим там, де геометрія вже менша за піксель. */
-  var GOFF=[1.0,-0.95,-2.3], GSZ=[3.7,2.4,1.5], GAL=[1.0,0.5,0.24];
+  var GJ=[0,2,4], GSZ=[3.7,2.4,1.5], GAL=[1.0,0.5,0.24];
   var gPos=new Float32Array(TMAX*9), gCol=new Float32Array(TMAX*9);
   var gSz=new Float32Array(TMAX*3), gAl=new Float32Array(TMAX*3);
   for(var gi=0;gi<TMAX;gi++) for(var gj=0;gj<3;gj++){ gSz[gi*3+gj]=GSZ[gj]; gAl[gi*3+gj]=GAL[gj]; }
@@ -1650,31 +1668,37 @@ var TMAX=1200;
   trainG.add(glowPts);
 
 var RTX={"GS":"S","FS":"S","H":"S","SS":"SIR","SI":"SIR","6X":"6","7X":"7","FX":"F"};
-var trainCols=[];
+var trainCols=[], trainHead=[];
 /* Поїзд — світло, що рухається по трубі: уночі майже білий, удень майже чорний,
    з ледь помітним відтінком маршруту. Колір лінії вже несе труба; у кольорі лінії
    поїзд губився на ній. */
 function trainColors(){
   var dark=themeNow()==="dark", w=new THREE.Color(dark?0xffffff:0x15181c);
   trainCols=TR.routes.map(function(r){
-    return new THREE.Color(RT[RTX[r]||r]||"#7C858C").lerp(w,dark?.72:.68);
+    return new THREE.Color(RT[RTX[r]||r]||"#7C858C").lerp(w,dark?.72:.88);
+  });
+  trainHead=TR.routes.map(function(r){
+    return new THREE.Color(RT[RTX[r]||r]||"#7C858C").lerp(w,dark?.90:.96);
   });
 }
 var tp=new THREE.Vector3(), tq=new THREE.Vector3(), tdir=new THREE.Vector3(),
     tm=new THREE.Matrix4(), tqt=new THREE.Quaternion(), tsc=new THREE.Vector3(), ZF=new THREE.Vector3(0,0,1),
-    tRt=new THREE.Vector3(), tUp2=new THREE.Vector3(), tHz=new THREE.Vector3();
+    tRt=new THREE.Vector3(), tUp2=new THREE.Vector3(), tHz=new THREE.Vector3(),
+    tLd=new THREE.Vector3(0,0,1);
 function ease(f){
   if(f<=0) return 0; if(f>=1) return 1;
   var A=0.26, B=0.74, area=0.5*A+(B-A)+0.5*(1-B);
-  if(f<A) return (0.5*f*f/A)/area;
+  // рампи — інтеграл smoothstep: швидкість росте й спадає без зламу,
+  // тож прискорення теж неперервне (площа та сама, що в трапеції)
+  if(f<A){ var u=f/A; return (A*(u*u*u-0.5*u*u*u*u))/area; }
   if(f<B) return (0.5*A+(f-A))/area;
-  var g=1-f; return (area-0.5*g*g/(1-B))/area;
+  var v=(1-f)/(1-B); return (area-(1-B)*(v*v*v-0.5*v*v*v*v))/area;
 }
 var trLive=0;
 function drawTrains(){
   if(!trOn){ trainMesh.count=0; trLive=0; glowGeo.setDrawRange(0,0); return; }
   if(!trainCols.length) trainColors();
-  var rv=tubeRNow*TUBE_K.value, t=trT, n=0, R=rv*1.20, HL=rv*7.2;
+  var rv=tubeRNow*TUBE_K.value, t=trT, n=0, mc=0, R=rv*1.20, HL=rv*7.2;
   for(var i=0;i<trN && n<TMAX;i++){
     if(t<trT0[i]||t>trT1[i]) continue;
     var a=trSeg0[i], b=a+trSegN[i]-1, k=-1;
@@ -1687,20 +1711,31 @@ function drawTrains(){
       if(nx>=trSeg0[i]+trSegN[i] || TR.pe[pr][1]!==TR.pe[sgPair[nx]][0]) continue;  // розрив у даних
       s=L;
     }
-    pairAt(pr,s,tp);
-    var ds=Math.min(40,L*0.5);
-    if(s+ds<=L) pairAt(pr,s+ds,tq); else { pairAt(pr,Math.max(0,s-ds),tq); back=true; }
-    tdir.subVectors(tq,tp); if(back) tdir.negate();
-    if(tdir.lengthSq()<1e-6) tdir.set(0,0,1); else tdir.normalize();
-    tHz.set(tdir.x,0,tdir.z);
-    if(tHz.lengthSq()<1e-8) tHz.set(0,0,1); else tHz.normalize();
-    tRt.set(0,1,0).cross(tHz).normalize(); tUp2.crossVectors(tdir,tRt).normalize();
-    tsc.set(R,R,HL); tm.makeBasis(tRt,tUp2,tdir); tm.scale(tsc); tm.setPosition(tp);
-    trainMesh.setMatrixAt(n,tm);
-    var tc=trainCols[trRoute[i]]; trainMesh.setColorAt(n,tc);
+    // pairAt міряє шлях у координатах ТРАСИ, а HL — у світових; коефіцієнт
+    // міряємо тут же, двома пробами, бо проєкція не одна на всю модель
+    var CP=((2*HL)/NCAR)/pairUnit(pr);
+    // на першому перегоні рейсу хвосту нема куди відходити — стискаємо склад,
+    // інакше всі вагони збиваються в одну точку на кінцевій
+    if(k===trSeg0[i] && s<NCAR*CP) CP=Math.max(s/NCAR, CP*0.15);
+    for(var jj=0;jj<=NCAR;jj++) backPoint(i,k,s,jj*CP,JP[jj]);
+    var tc=trainCols[trRoute[i]], tch=trainHead[trRoute[i]]||tc;
+    for(var jj=0;jj<NCAR;jj++){
+      var A=JP[jj], B=JP[jj+1];
+      tdir.subVectors(A,B);
+      var half=tdir.length()*0.5;
+      if(half<1e-4){ tdir.copy(tLd); half=R*0.4; } else { tdir.multiplyScalar(0.5/half); tLd.copy(tdir); }
+      tp.addVectors(A,B).multiplyScalar(0.5);
+      tHz.set(tdir.x,0,tdir.z);
+      if(tHz.lengthSq()<1e-8) tHz.set(0,0,1); else tHz.normalize();
+      tRt.set(0,1,0).cross(tHz).normalize(); tUp2.crossVectors(tdir,tRt).normalize();
+      tsc.set(R,R,Math.max(half*0.84,R*0.4));
+      tm.makeBasis(tRt,tUp2,tdir); tm.scale(tsc); tm.setPosition(tp);
+      trainMesh.setMatrixAt(mc,tm); trainMesh.setColorAt(mc, jj===0?tch:tc);
+      mc++;
+    }
     for(var gi=0;gi<3;gi++){
-      var o=(n*3+gi)*3, f=GOFF[gi]*HL;
-      gPos[o]=tp.x+tdir.x*f; gPos[o+1]=tp.y+tdir.y*f; gPos[o+2]=tp.z+tdir.z*f;
+      var o=(n*3+gi)*3, Q=JP[GJ[gi]];
+      gPos[o]=Q.x; gPos[o+1]=Q.y; gPos[o+2]=Q.z;
       gCol[o]=tc.r; gCol[o+1]=tc.g; gCol[o+2]=tc.b;
     }
     n++;
@@ -1710,7 +1745,7 @@ function drawTrains(){
   glowGeo.attributes.aColor.needsUpdate=true;
   glowU.uPx.value=renderer.getPixelRatio();
   glowU.uGlow.value=Math.max(0,Math.min(1,(cam.dist-2200)/3800))*0.92+0.08;
-  trainMesh.count=n; trLive=n;
+  trainMesh.count=mc; trLive=n;
   trainMesh.instanceMatrix.needsUpdate=true;
   if(trainMesh.instanceColor) trainMesh.instanceColor.needsUpdate=true;
 }
