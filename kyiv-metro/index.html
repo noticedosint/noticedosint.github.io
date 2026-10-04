@@ -328,15 +328,21 @@ function tuneRelief(){
   for(var i=0;i<reliefMats.length;i++) reliefMats[i].opacity=.52-.34*t;
   for(var j=0;j<curtainMats.length;j++) curtainMats[j].opacity=.34-.24*t;
 }
-/* Підлога для плану міста у вигляді «над морем»: на 2 км нижче
-   найглибшого перона. Поки план лежав на нулі, око читало його як
-   поверхню землі — і станції Теремківського плато (перон 171-179 м)
-   висіли НАД містом. Дві «землі» в одному кадрі суперечать одна одній. */
+/* Підлога для плану міста у вигляді «над морем». Поки план лежав на нулі,
+   око читало його як поверхню землі — і станції Теремківського плато
+   (перон 171-179 м) висіли НАД містом. Дві «землі» в одному кадрі
+   суперечать одна одній, тож план іде вниз.
+   Наскільки вниз — має значення: перші 2 км давали 24% висоти моделі
+   порожнечі, і все метро здавалось підвішеним ні до чого. Беремо 4%
+   власної висоти моделі: план лягає відразу під найглибший перон і
+   тримається там на будь-якому перебільшенні. */
 function floorY(){
   if(!ABS) return 0;
-  var lo=0; S.lines.forEach(function(L){ L.stations.forEach(function(st){
-    if(st.zp!=null) lo=Math.min(lo,(st.zp-ZREF)*exag/U); }); });
-  return lo-2*KM;
+  var lo=0, hi=0;
+  S.lines.forEach(function(L){ L.stations.forEach(function(st){
+    if(st.zp!=null) lo=Math.min(lo,(st.zp-ZREF)*exag/U);
+    if(st.zs!=null) hi=Math.max(hi,(st.zs-ZREF)*exag/U); }); });
+  return lo-0.04*(hi-lo);
 }
 function depthY(d, zp){ return (ABS && zp!=null) ? (zp-ZREF)*exag/U
                                                  : -(d==null?0:d)*exag/U; }
