@@ -1873,7 +1873,21 @@ requestAnimationFrame(frame);
 #clock #play,#clock #clockT,#clock #clockR,#clock #clockN,
 #clock #clockD,#clock #trX{display:none!important}
 #clock #trGo{display:inline-flex!important}
-#clock #speeds{margin-left:2px}
+/* Перемикач швидкості. У збірці сусідньої сесії на вузькому екрані кнопки
+   розтягуються на всю ширину з горизонтальним полем 2 px, тож заливка обраної
+   наповзає на сусідній напис. Збираємо три кнопки в один сегментний перемикач
+   із доріжкою: поля нормальні, група відокремлена від «Рух поїздів». */
+#clock #speeds{flex:none!important;gap:2px;padding:3px;margin-left:6px;
+  justify-content:flex-start;border:1px solid var(--rule);border-radius:999px}
+#clock #speeds button{flex:none!important;padding:6px 9px;font-size:11px;
+  letter-spacing:0;line-height:1}
+#clock #speeds button[aria-pressed="true"]{background:var(--ink);color:var(--bg2)}
+/* На 320 px картка з доріжкою виходила за правий край на 3 px — там підтискаємо
+   поля. Міряно: 309 px при 320 px вікна. */
+@media (max-width:360px){
+  #clock #speeds{margin-left:4px;padding:2px}
+  #clock #speeds button{padding:6px 7px}
+}
 #trGo .i-stop{display:none}
 #trGo[aria-pressed="true"] .i-go{display:none}
 #trGo[aria-pressed="true"] .i-stop{display:block}
