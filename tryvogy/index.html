@@ -138,8 +138,11 @@ fetch('data.json').then(r=>r.json()).then(data=>{
     const cv=document.createElement('canvas');
     const nm=document.createElement('p'); nm.className='nm'; nm.textContent=c.city;
     const nu=document.createElement('p'); nu.className='nu';
-    nu.innerHTML='<span><b>'+String(c.sut).replace('.',',')+'</b> діб під тривогою із '
-      +nf(c.days)+'</span><span>'+nf(c.nights)+' ночей із тривогою</span>';
+    // toFixed, а не String: JS друкує 608.0 як «608», і чотири міста з рівним
+    // числом вибивалися з колонки, де в решти один знак після коми.
+    nu.innerHTML='<span><b>'+c.sut.toFixed(1).replace('.',',')+'</b> із '
+      +nf(c.days)+' діб під тривогою</span><span>'+nf(c.nights)
+      +' ночей із тривогою</span>';
     cell.append(nm,nu,cv);
     if(c.occ){ const wn=document.createElement('p'); wn.className='warn';
       wn.textContent=c.occ+' діб окупації – спостереження немає'; cell.append(wn); }
