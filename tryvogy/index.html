@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Річні кільця тривог – noticed</title>
+<meta name="description" content="Скільки часу 28 міст України простояли під повітряною тривогою. Кожне кільце – рік, кожен промінь – доба.">
+<style>
+  :root{ --bg:#12100D; --surf:#1A1713; --ink:#EFE9DC; --dim:#8B8474;
+         --rule:#302B23; --day:#EA8C4E; --night:#C3A7E6; }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font:400 17px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  main{max-width:1180px;margin:0 auto;padding:56px 20px 80px}
+  .top{max-width:640px}
+  h1{font-size:15px;font-weight:600;letter-spacing:.14em;text-transform:lowercase;
+     color:var(--dim);margin:0 0 28px}
+  h1 a{color:inherit;text-decoration:none}
+  .lead{font-size:30px;font-weight:600;line-height:1.18;letter-spacing:-.01em;margin:0 0 18px}
+  .sub{color:var(--dim);font-size:16px;margin:0 0 10px}
+  .key{display:flex;gap:22px;flex-wrap:wrap;color:var(--dim);font-size:15px;margin:22px 0 0}
+  .key i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:7px;
+     vertical-align:middle}
+  .grid{display:grid;gap:26px 20px;margin-top:44px;
+     grid-template-columns:repeat(auto-fill,minmax(290px,1fr))}
+  .cell{border-top:1px solid var(--rule);padding-top:16px}
+  canvas{display:block;width:100%;height:auto}
+  .nm{font-size:19px;font-weight:600;margin:0 0 2px;letter-spacing:-.01em}
+  .nu{color:var(--dim);font-size:14px;margin:0;line-height:1.35}
+  .nu span{display:block}
+  .nu b{color:var(--ink);font-weight:600}
+  .warn{color:var(--dim);font-size:14px;margin-top:6px}
+  footer{margin-top:56px;border-top:1px solid var(--rule);padding-top:22px;
+     color:var(--dim);font-size:14px;max-width:720px}
+  footer p{margin:0 0 10px}
+  footer a{color:var(--dim)}
+  @media (max-width:520px){
+    main{padding:40px 16px 64px} .lead{font-size:24px}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:20px 14px}
+    .nm{font-size:16px} .nu{font-size:13px}
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <h1><a href="../">noticed</a></h1>
+    <p class="lead">Річні кільця тривог</p>
+    <p class="sub">Скільки часу 28 міст простояли під повітряною тривогою,
+      від 16 березня 2022 до 6 жовтня 2026. Кільце – рік, 2022 усередині.
+      Кут – день року, за годинниковою стрілкою від 1 січня.</p>
+    <p class="sub">Промінь назовні – яку частку дня місто простояло під тривогою,
+      усередину – яку частку ночі. Половини нормовані окремо, день на 18 годин,
+      ніч на 6, тож їхню довжину між собою порівнювати не можна.</p>
+    <div class="key">
+      <span><i style="background:var(--day)"></i>день, 06:00–24:00</span>
+      <span><i style="background:var(--night)"></i>ніч, 00:00–06:00</span>
+      <span><i style="background:var(--rule)"></i>даних немає</span>
+    </div>
+  </div>
+  <div class="grid" id="grid"></div>
+  <footer>
+    <p>З 6 вересня 2026 тривога має два рівні, червоний і жовтий, і обидва тут
+      рахуються. Поріг став нижчим, тому останній місяць ряду з попередніми роками
+      не зіставний.</p>
+    <p>Знаменник усюди – доби, які справді мають дані. Доби, коли обірвався збір,
+      і доби окупації Херсона показані затіненою смугою: це не тиша, це відсутність
+      спостереження.</p>
+    <p><a href="https://t.me/noticed_osint">t.me/noticed_osint</a></p>
+  </footer>
+</main>
+<script>
+const GROUND='#12100D', DAY='#EA8C4E', NIGHT='#C3A7E6', TICK='#3A342A', GAP='#302B23';
+const nf = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'\u00A0');
+
+function doy(d){ const s=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.round((d-s)/86400000); }
+function leap(y){ return (y%4===0&&y%100!==0)||y%400===0; }
+
+function draw(cv, c, data){
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  const size = cv.clientWidth;
+  cv.width = size*dpr; cv.height = size*dpr;
+  const g = cv.getContext('2d');
+  g.scale(dpr,dpr);
+  g.fillStyle = GROUND; g.fillRect(0,0,size,size);
+  const cx=size/2, cy=size/2;
+  const R0=size*0.050, STEP=size*0.090, L=size*0.036;
+  const start = new Date(c.start+'T00:00:00Z');
+  const y0 = start.getUTCFullYear();
+  const years = [...new Set(c.day.map((_,n)=>{
+    const d=new Date(start.getTime()+n*86400000); return d.getUTCFullYear();}))];
+
+  // штрихові кола років – рамка відліку, видно навіть там, де тривог не було
+  g.strokeStyle=TICK; g.lineWidth=1; g.setLineDash([2,4]);
+  years.forEach(y=>{ g.beginPath();
+    g.arc(cx,cy,R0+(y-y0)*STEP,0,Math.PI*2); g.stroke(); });
+  g.setLineDash([]);
+
+  const ray=(n,val,outward,color,w)=>{
+    if(val<=0) return;
+    const d=new Date(start.getTime()+n*86400000);
+    const yr=d.getUTCFullYear();
+    const a=(doy(d)/(leap(yr)?366:365))*Math.PI*2 - Math.PI/2;
+    const r=R0+(yr-y0)*STEP;
+    const len=Math.min(1,val)*L*(outward?1:-1);
+    g.strokeStyle=color; g.lineWidth=w;
+    g.beginPath();
+    g.moveTo(cx+Math.cos(a)*r, cy+Math.sin(a)*r);
+    g.lineTo(cx+Math.cos(a)*(r+len), cy+Math.sin(a)*(r+len));
+    g.stroke();
+  };
+  const w = Math.max(1, size/300);
+  // спершу смуги «даних немає» – щоб промені лягли поверх, а не під них
+  for(let n=0;n<c.state.length;n++){
+    if(c.state[n]===0) continue;
+    const d=new Date(start.getTime()+n*86400000), yr=d.getUTCFullYear();
+    const a=(doy(d)/(leap(yr)?366:365))*Math.PI*2 - Math.PI/2;
+    const r=R0+(yr-y0)*STEP;
+    g.strokeStyle=GAP; g.lineWidth=w;
+    g.beginPath();
+    g.moveTo(cx+Math.cos(a)*(r-L), cy+Math.sin(a)*(r-L));
+    g.lineTo(cx+Math.cos(a)*(r+L), cy+Math.sin(a)*(r+L));
+    g.stroke();
+  }
+  for(let n=0;n<c.day.length;n++){
+    if(c.state[n]!==0) continue;
+    ray(n, c.day[n]/data.dayw,   true,  DAY,   w);
+    ray(n, c.night[n]/data.nightw, false, NIGHT, w);
+  }
+}
+
+fetch('data.json').then(r=>r.json()).then(data=>{
+  const grid=document.getElementById('grid');
+  data.cities.forEach(c=>{
+    const cell=document.createElement('div'); cell.className='cell';
+    const cv=document.createElement('canvas');
+    const nm=document.createElement('p'); nm.className='nm'; nm.textContent=c.city;
+    const nu=document.createElement('p'); nu.className='nu';
+    nu.innerHTML='<span><b>'+String(c.sut).replace('.',',')+'</b> діб під тривогою із '
+      +nf(c.days)+'</span><span>'+nf(c.nights)+' ночей із тривогою</span>';
+    cell.append(nm,nu,cv);
+    if(c.occ){ const wn=document.createElement('p'); wn.className='warn';
+      wn.textContent=c.occ+' діб окупації – спостереження немає'; cell.append(wn); }
+    grid.append(cell);
+    requestAnimationFrame(()=>draw(cv,c,data));
+  });
+  let t; addEventListener('resize',()=>{ clearTimeout(t); t=setTimeout(()=>{
+    const cvs=grid.querySelectorAll('canvas');
+    data.cities.forEach((c,k)=>draw(cvs[k],c,data)); },200); });
+});
+</script>
+</body>
+</html>
