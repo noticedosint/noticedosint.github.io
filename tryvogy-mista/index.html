@@ -190,7 +190,7 @@ dialog#method .method{margin:0;padding:0;border:0}
   <div class="rank" id="rank"></div>
   <button class="more" id="more" aria-expanded="false"></button>
   <div class="leg">
-    <span><i style="background:#EA8C4E"></i>години завидна</span>
+    <span><i style="background:#EA8C4E"></i>години з 06:00 до 24:00</span>
     <span><i style="background:#C3A7E6"></i>години вночі (00:00–06:00)</span>
     <span style="color:var(--faint)">натисніть на місто, щоб побачити подробиці</span>
   </div>
@@ -305,7 +305,7 @@ function show(k){
   U(nf(les),'шкільних уроків минуло під тривогою','var(--day)');
   U(nf(v.school_days),'навчальних днів із тривогою, 08:00–15:00','var(--day)');
   U(nf(v.nights),'ночей із тривогою, 00:00–06:00','var(--night)');
-  U(nf(v.nh/8),'ночей сну забрали нічні тривоги','var(--night)');
+  U(nf(v.nh/8),'восьмигодинних ночей — стільки дають нічні години тривоги','var(--night)');
   // Рекорд, поставлений уже за дворівневим відліком, не можна подавати поряд із
   // 4,5 роками мовчки: поріг сигналу з 6 вересня 2026 нижчий. Умова — з даних.
   const fnote=v.max_at>='2026-09-06'
@@ -316,12 +316,12 @@ function show(k){
     <div class="units">${u.join('')}</div>
     ${fnote?`<p class="unote">${fnote}</p>`:''}
     <div class="leg ulg">
-      <span><i style="background:var(--day)"></i>показники денного часу</span>
+      <span><i style="background:var(--day)"></i>показники часу з 06:00 до 24:00</span>
       <span><i style="background:var(--night)"></i>нічного</span>
       <span style="color:var(--faint)">білим — те, що рахує добу цілком</span>
     </div>
     <div class="chart"><div id="ch"></div></div>
-    <p class="note">Одна вертикальна смужка — одна доба. Угору від осі — години тривоги завидна, вниз — уночі (00:00–06:00). Шкала спільна: одна година вгору й одна вниз мають однакову висоту. Розриви — доби без жодної тривоги. Дві сірі смужки у 2023 році — доби, коли стрічка обривалась: вимір за них не рахується взагалі. Світлих смуг наприкінці теж дві: 29 серпня – 2 вересня 2026 року, коли основний канал мовчав і дані взято з незалежного @UkraineAlarmSignal, і останній місяць, зібраний звідти ж.</p>`;
+    <p class="note">Одна вертикальна смужка — одна доба. Угору від осі — години тривоги поза нічним вікном, тобто 06:00–24:00, вниз — уночі (00:00–06:00). Шкала спільна: одна година вгору й одна вниз мають однакову висоту. Розриви — доби без жодної тривоги. Сірим позначено те, чого не виміряно: дві смужки у 2023 році — доби, коли стрічка обривалась, а в Херсона ще й уся окупація, коли українське оповіщення на місті не працювало. Ці доби в числах не рахуються. Світлих смуг наприкінці теж дві: 29 серпня – 2 вересня 2026 року, коли основний канал мовчав і дані взято з незалежного @UkraineAlarmSignal, і останній місяць, зібраний звідти ж.</p>`;
   chart(v);
 }
 function chart(v){
@@ -330,10 +330,19 @@ function chart(v){
   const W=1200,ML=58,MR=14,MT=18,MB=32, iw=W-ML-MR;
   const PX=7.6, up=18*PX, dn=6.5*PX, axis=MT+up, IH=up+dn;
   const s=mk('svg',{viewBox:`0 0 ${W} ${MT+IH+MB}`,role:'img',
-    'aria-label':'Години тривоги подобово: угору від осі — завидна, вниз — уночі'});
+    'aria-label':'Години тривоги подобово: угору від осі — з 06:00 до 24:00, вниз — уночі'});
   s.appendChild(mk('rect',{x:ML,y:MT,width:iw,height:IH,fill:'#0F1119'}));
   const n=v.days, slot=iw/n;
   { const bd0=new Date(v.base+'T00:00:00Z');
+    // Окупація: оповіщення не працювало, у даних нулі, тобто на графіку це
+    // виглядало як 255 діб спокою Херсона. Той самий спосіб позначення, що й
+    // для діб збою, лише смуга широка.
+    for(const [a,b] of (v.occ||[])){
+      const j0=Math.round((new Date(a+'T00:00:00Z')-bd0)/864e5), j1=Math.round((new Date(b+'T00:00:00Z')-bd0)/864e5);
+      if(j1>=0&&j0<n) s.appendChild(mk('rect',{x:(ML+Math.max(j0,0)*slot).toFixed(2),y:MT,
+        width:Math.max((Math.min(j1,n-1)-Math.max(j0,0)+1)*slot,2).toFixed(2),
+        height:IH,fill:'#8E8AA0',opacity:.34}));
+    }
     for(const b of BLIND){
       const j=Math.round((new Date(b+'T00:00:00Z')-bd0)/864e5);
       if(j>=0&&j<n) s.appendChild(mk('rect',{x:(ML+j*slot).toFixed(2),y:MT,
@@ -366,7 +375,7 @@ function chart(v){
     const t=mk('text',{x:x+5,y:MT+IH+20,fill:'#8F8D9B','font-size':13,
       'font-family':'IBM Plex Mono, monospace'}); t.textContent=y; s.appendChild(t);
   }
-  for(const [yy,txt,cc] of [[MT+11,'завидна','#EA8C4E'],[MT+IH-6,'уночі','#C3A7E6']]){
+  for(const [yy,txt,cc] of [[MT+11,'06:00–24:00','#EA8C4E'],[MT+IH-6,'уночі','#C3A7E6']]){
     const t=mk('text',{x:ML+iw-4,y:yy,fill:cc,'font-size':11,'opacity':.85,
       'font-family':'IBM Plex Mono, monospace','text-anchor':'end'}); t.textContent=txt; s.appendChild(t);
   }
@@ -414,6 +423,10 @@ show('Київ'); document.querySelector('.row[data-k="Київ"]').classList.ad
   const sc=Math.min((W-2*PAD)/(lo1-lo0),(H-2*PAD)/(m0-m1));
   const ox=PAD+((W-2*PAD)-(lo1-lo0)*sc)/2, oy=PAD+((H-2*PAD)-(m0-m1)*sc)/2;
   const X=lo=>ox+(lo-lo0)*sc, Y=la=>oy+(m0-mer(la))*sc;
+  // M.val лишився від попереднього перерахунку: 18 із 22 областей розходились
+  // із набором, Харків на 19,5 доби. Карта фарбувалась і підписувалась старими
+  // числами, а картки під нею показували нові. Тепер одне джерело — C.
+  for(const [ob,city] of Object.entries(M.cap)) if(C[city]) M.val[ob]=Math.round(C[city].h/24);   // цілі доби, як у картці
   const vals=Object.values(M.val), mx=Math.max(...vals);
   const ramp=[[0,'#1B2030'],[.18,'#3A3550'],[.42,'#7A3F4A'],[.68,'#C25A3C'],[1,'#F2A03C']];
   const hx=c=>[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)];
